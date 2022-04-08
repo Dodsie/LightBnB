@@ -12,16 +12,11 @@ const pool = new Pool({
 pool.connect().then(() => console.log('Server is running'));
 
 /// Users
-
 /**
  * Get a single user from the database given their email.
  * @param {String} email The email of the user.
  * @return {Promise<{}>} A promise to the user.
  */
-
-
-
-//HERE
 const getUserWithEmail = function(email) {
   return pool
     .query(`SELECT * FROM users WHERE email = $1;`, [email])
@@ -52,15 +47,14 @@ const getUserWithId = function(id) {
       console.log(err.message);
     });
 };
-exports.getUserWithId = getUserWithId;
 
+exports.getUserWithId = getUserWithId;
 
 /**
  * Add a new user to the database.
  * @param {{name: string, password: string, email: string}} user
  * @return {Promise<{}>} A promise to the user.
  */
-//HERE
 const addUser = function(user) {
   return pool
     .query(`INSERT INTO users(name, email, password)
@@ -74,15 +68,7 @@ const addUser = function(user) {
     });
 };
 
-
 exports.addUser = addUser;
-
-
-
-
-
-
-
 
 /// Reservations
 
@@ -92,7 +78,21 @@ exports.addUser = addUser;
  * @return {Promise<[{}]>} A promise to the reservations.
  */
 const getAllReservations = function(guest_id, limit = 10) {
-  return getAllProperties(null, 2);
+  return pool
+    .query(`SELECT reservations.id, properties.title, properties.cost_per_night, reservations.start_date, avg(rating) as average_rating
+    FROM reservations
+    JOIN properties ON reservations.property_id = properties.id
+    JOIN property_reviews ON properties.id = property_reviews.property_id
+    WHERE reservations.guest_id = $1
+    GROUP BY properties.id, reservations.id
+    ORDER BY reservations.start_date
+    LIMIT $2;`,[guest_id, limit])
+    .then((result) => {
+      return result.rows;
+    })
+    .catch((err) => {
+      console.log(err.message);
+    });
 };
 exports.getAllReservations = getAllReservations;
 
